@@ -10,12 +10,76 @@
             text-align: center;
             margin: 100px;
         }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 2px solid #FF0050;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        input {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .submit-button {
+            background-color: #FF0050;
+            color: white;
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .submit-button:hover {
+            background-color: #D80040;
+        }
+        .home-button {
+            margin-top: 20px;
+            display: inline-block;
+            text-decoration: none;
+            color: white;
+            background-color: #555;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+        .home-button:hover {
+            background-color: #333;
+        }
     </style>
 </head>
 <body>
     <h1>TikTok API Integration Coming Soon</h1>
-    <p>We are building a **revolutionary platform** that transforms the way history is learned.</p>
-    <p>Our goal? **To replace outdated textbooks** with an **engaging, digital-first experience**—built for a generation with shorter attention spans and a desire for **interactive, fast-paced learning.**</p>
-    <p>Stay tuned for updates!</p>
+    <p>We are building a <strong>revolutionary platform</strong> that transforms the way history is learned.</p>
+    <p>Our goal? <strong>To replace outdated textbooks</strong> with an <strong>engaging, digital-first experience</strong>—built for a generation with shorter attention spans and a desire for <strong>interactive, fast-paced learning.</strong></p>
+
+    <div class="container">
+        <p><strong>Feel free to insert your favorite historical event and see the magic happen!</strong></p>
+        <input type="text" id="historyEvent" placeholder="E.g., The Moon Landing, The Renaissance...">
+        <button class="submit-button" onclick="generateVideo()">Generate Video</button>
+        <p id="responseMessage" style="display: none; color: green; font-weight: bold;"></p>
+    </div>
+
+    <a href="index.html" class="home-button">Back to Home</a>
+
+    <script>
+        function generateVideo() {
+            let eventInput = document.getElementById("historyEvent").value;
+            let responseMessage = document.getElementById("responseMessage");
+
+            if (eventInput.trim() === "") {
+                alert("Please enter a historical event!");
+            } else {
+                responseMessage.style.display = "block";
+                responseMessage.innerText = "Video generation feature coming soon for: " + eventInput;
+            }
+        }
+    </script>
 </body>
 </html>
