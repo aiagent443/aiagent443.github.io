@@ -1,46 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Revolutionizing Education</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 100px;
-        }
-        .button {
-            background-color: #FF0050;
-            color: white;
-            padding: 15px 25px;
-            font-size: 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .button:hover {
-            background-color: #D80040;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Revolutionizing Education</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 100px;
+    }
+    .button {
+      background-color: #FF0050;
+      color: white;
+      padding: 15px 25px;
+      font-size: 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .button:hover {
+      background-color: #D80040;
+    }
+  </style>
 </head>
 <body>
-    <h1>The Future of Learning Starts Here</h1>
-    <p>We are reimagining the way historical events are taught. Textbooks have remained the same for decades, relying on outdated methods of engagement.</p>
-    <p>In the new age of learning, attention spans are shorter than ever, and traditional education models fail to keep up. That's why we're developing an innovative, TikTok-powered approach to history education where immersive storytelling meets bite-sized learning.</p>
-    <p>Stay ahead of the curve and experience history like never before. </p>
+  <h1>The Future of Learning Starts Here</h1>
+  <p>We are reimagining the way historical events are taught. Textbooks have remained the same for decades, relying on outdated methods of engagement.</p>
+  <p>In the new age of learning, attention spans are shorter than ever, and traditional education models fail to keep up. That's why we're developing an innovative, TikTok-powered approach to history education where immersive storytelling meets bite-sized learning.</p>
+  <p>Stay ahead of the curve and experience history like never before.</p>
 
-    <button class="button" onclick="redirectToIntegration()">Generate A Video</button>
-    
+  <!-- This button starts the OAuth flow -->
+  <button class="button" onclick="redirectToTikTok()">Connect to TikTok</button>
 
-    <script>
-        function redirectToIntegration() {
-            window.location.href = "integration.html";
-        }
-    </script>
-
-    <p><a href="privacy.html">Privacy Policy</a> | <a href="terms.html">Terms of Service</a></p>
-
-</body>
-</html>
+  <script>
+    function redirectToTikTok() {
+      // Provided client key and Render backend callback URL
+      const clientKey = "awrukr11fn6pj6y9";
+      const redirectUri = encodeURIComponent("https://tiktok-oauth-backend.onrender.com/auth/callback");
+      c
