@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if page.title %}{{ page.title }} - {% endif %}{{ site.title }}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 100px;
+    }
+    .button {
+      background-color: #FF0050;
+      color: white;
+      padding: 15px 25px;
+      font-size: 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .button:hover {
+      background-color: #D80040;
+    }
+  </style>
+  {% seo %}
+</head>
+<body>
+  {{ content }}
+
+  <p>
+    <a href="{{ '/privacy.html' | relative_url }}">Privacy Policy</a> | <a href="{{ '/terms.html' | relative_url }}">Terms of Service</a>
+  </p>
+</body>
+</html> 
