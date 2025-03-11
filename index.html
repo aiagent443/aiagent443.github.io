@@ -18,18 +18,51 @@ title: Home
       console.log("Button clicked - Starting OAuth flow");
       // Updated client key and redirect URI for sandbox
       const clientKey = "sbawtupv4in9186fva";
-      const redirectUri = encodeURIComponent("https://tiktok-oauth-backend.onrender.com");
+      const redirectUri = encodeURIComponent("https://tiktok-oauth-backend.onrender.com/auth/callback");
       const scopes = encodeURIComponent("user.info.profile,video.list");
       const responseType = "code";
+      const state = Math.random().toString(36).substring(7); // Add state parameter for security
 
-      const tiktokAuthUrl = `https://www.tiktok.com/auth/authorize/?client_key=${clientKey}&scope=${scopes}&response_type=${responseType}&redirect_uri=${redirectUri}`;
+      const tiktokAuthUrl = `https://www.tiktok.com/auth/authorize/?client_key=${clientKey}&scope=${scopes}&response_type=${responseType}&redirect_uri=${redirectUri}&state=${state}`;
       console.log("Generated TikTok Auth URL:", tiktokAuthUrl);
       console.log("Attempting redirect...");
+      
+      // Store state in sessionStorage for verification
+      sessionStorage.setItem('oauth_state', state);
       
       // Redirect the browser to TikTok's OAuth endpoint
       window.location.href = tiktokAuthUrl;
     } catch (error) {
       console.error("Error in OAuth flow:", error);
+      alert("An error occurred while connecting to TikTok. Please try again.");
     }
   };
+
+  // Handle the OAuth callback
+  window.addEventListener('load', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    const error = urlParams.get('error');
+    const errorDescription = urlParams.get('error_description');
+
+    if (error) {
+      console.error('OAuth Error:', error, errorDescription);
+      alert(`Authentication Error: ${errorDescription || error}`);
+      return;
+    }
+
+    if (code) {
+      const storedState = sessionStorage.getItem('oauth_state');
+      if (state !== storedState) {
+        console.error('State mismatch - possible CSRF attack');
+        alert('Security Error: Invalid state parameter');
+        return;
+      }
+
+      console.log('Authorization code received, processing...');
+      // Clear the stored state
+      sessionStorage.removeItem('oauth_state');
+    }
+  });
 </script>
