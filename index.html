@@ -13,7 +13,6 @@ title: Home
 <p id="statusMessage" style="display: none; color: #FF0050; margin-top: 10px;"></p>
 
 <script>
-  // Attach the function to the window object to ensure it's globally available.
   window.redirectToTikTok = function() {
     try {
       console.log("Button clicked - Starting OAuth flow");
@@ -23,28 +22,24 @@ title: Home
       statusMessage.textContent = "Connecting to TikTok...";
       statusMessage.style.display = "block";
 
-      // Hardcoded values for maximum control
       const clientKey = "sbawtupv4in9186fva";
-      const redirectUri = "https://tiktok-oauth-backend.onrender.com";
+      const redirectUri = encodeURIComponent("https://tiktok-oauth-backend.onrender.com/auth/callback"); // Fix: URL encoding
       const state = Math.random().toString(36).substring(7);
-      
-      // Use URLSearchParams to properly construct the URL
-      const params = new URLSearchParams();
-      params.append('client_key', clientKey);
-      params.append('scope', 'user.info.profile,video.list');
-      params.append('response_type', 'code');
-      params.append('redirect_uri', redirectUri);
-      params.append('state', state);
-      
+
+      const params = new URLSearchParams({
+        client_key: clientKey,
+        scope: "user.info.profile,video.list",
+        response_type: "code",
+        redirect_uri: redirectUri,
+        state: state
+      });
+
       const tiktokAuthUrl = "https://www.tiktok.com/auth/authorize/?" + params.toString();
-      
+
       console.log("Generated TikTok Auth URL:", tiktokAuthUrl);
-      console.log("Redirect URI:", redirectUri);
-      
-      // Store state in sessionStorage for verification
+
       sessionStorage.setItem('oauth_state', state);
-      
-      // Redirect the browser to TikTok's OAuth endpoint
+
       window.location.href = tiktokAuthUrl;
     } catch (error) {
       console.error("Error in OAuth flow:", error);
@@ -55,7 +50,6 @@ title: Home
     }
   };
 
-  // Handle the OAuth callback
   window.addEventListener('load', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
@@ -65,7 +59,7 @@ title: Home
     const statusMessage = document.getElementById('statusMessage');
 
     if (error) {
-      console.error('OAuth Error:', error, errorDescription);
+      console.error("OAuth Error:", error, errorDescription);
       statusMessage.textContent = `Authentication Error: ${errorDescription || error}`;
       statusMessage.style.display = "block";
       return;
@@ -74,46 +68,37 @@ title: Home
     if (code) {
       const storedState = sessionStorage.getItem('oauth_state');
       if (state !== storedState) {
-        console.error('State mismatch - possible CSRF attack');
-        statusMessage.textContent = 'Security Error: Invalid state parameter';
+        console.error("State mismatch - possible CSRF attack");
+        statusMessage.textContent = "Security Error: Invalid state parameter";
         statusMessage.style.display = "block";
         return;
       }
 
-      console.log('Authorization code received, processing...');
-      // Clear the stored state
+      console.log("Authorization code received, sending to backend...");
+
       sessionStorage.removeItem('oauth_state');
 
-      // Send the code to your backend
-      fetch('https://tiktok-oauth-backend.onrender.com/auth/callback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          code: code,
-          state: state
-        })
+      fetch("https://tiktok-oauth-backend.onrender.com/auth/callback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, state })
       })
       .then(response => {
-        if (!response.ok) {
-          throw new Error('Backend server error');
-        }
+        if (!response.ok) throw new Error("Backend server error");
         return response.json();
       })
       .then(data => {
-        console.log('Successfully authenticated with TikTok');
-        statusMessage.textContent = 'Successfully connected to TikTok!';
-        statusMessage.style.color = 'green';
+        console.log("Successfully authenticated with TikTok:", data);
+        statusMessage.textContent = "Successfully connected to TikTok!";
+        statusMessage.style.color = "green";
         statusMessage.style.display = "block";
-        // Redirect to integration page or show success UI
         setTimeout(() => {
-          window.location.href = '/integration.html';
+          window.location.href = "/integration.html";
         }, 2000);
       })
       .catch(error => {
-        console.error('Backend Error:', error);
-        statusMessage.textContent = 'Error processing authentication. Please try again.';
+        console.error("Backend Error:", error);
+        statusMessage.textContent = "Error processing authentication. Please try again.";
         statusMessage.style.display = "block";
         document.getElementById('connectButton').disabled = false;
       });
