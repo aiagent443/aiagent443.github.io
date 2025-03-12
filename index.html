@@ -22,28 +22,56 @@ title: Home
       statusMessage.textContent = "Connecting to TikTok...";
       statusMessage.style.display = "block";
 
-      // Simple configuration
-      const clientKey = "sbawtupv4in9186fva";
-      const redirectUri = "https://tiktok-oauth-backend.onrender.com/auth/callback";
+      // Create a form and submit it instead of using window.location
+      // This prevents issues with URL parameter encoding
+      const form = document.createElement('form');
+      form.method = 'GET';
+      form.action = 'https://www.tiktok.com/auth/authorize';
+      form.style.display = 'none';
+      
+      // Add client key
+      const clientKeyInput = document.createElement('input');
+      clientKeyInput.type = 'hidden';
+      clientKeyInput.name = 'client_key';
+      clientKeyInput.value = 'sbawtupv4in9186fva';
+      form.appendChild(clientKeyInput);
+      
+      // Add scope
+      const scopeInput = document.createElement('input');
+      scopeInput.type = 'hidden';
+      scopeInput.name = 'scope';
+      scopeInput.value = 'user.info.profile,video.list';
+      form.appendChild(scopeInput);
+      
+      // Add response type
+      const responseTypeInput = document.createElement('input');
+      responseTypeInput.type = 'hidden';
+      responseTypeInput.name = 'response_type';
+      responseTypeInput.value = 'code';
+      form.appendChild(responseTypeInput);
+      
+      // Add redirect URI
+      const redirectUriInput = document.createElement('input');
+      redirectUriInput.type = 'hidden';
+      redirectUriInput.name = 'redirect_uri';
+      redirectUriInput.value = 'https://tiktok-oauth-backend.onrender.com/auth/callback';
+      form.appendChild(redirectUriInput);
+      
+      // Add state
       const state = "state" + Math.floor(Math.random() * 1000000);
+      const stateInput = document.createElement('input');
+      stateInput.type = 'hidden';
+      stateInput.name = 'state';
+      stateInput.value = state;
+      form.appendChild(stateInput);
       
-      // Direct URL construction
-      const tiktokAuthUrl = "https://www.tiktok.com/auth/authorize" + 
-                           "?client_key=" + clientKey + 
-                           "&scope=user.info.profile,video.list" + 
-                           "&response_type=code" + 
-                           "&redirect_uri=" + encodeURIComponent(redirectUri) + 
-                           "&state=" + state;
-      
-      // Essential logging
-      console.log("Auth URL:", tiktokAuthUrl);
-      
-      // Store minimal state
+      // Store state for verification
       sessionStorage.setItem('oauth_state', state);
-      sessionStorage.setItem('oauth_url', tiktokAuthUrl);
       
-      // Redirect
-      window.location.href = tiktokAuthUrl;
+      // Add form to body and submit
+      document.body.appendChild(form);
+      console.log("Submitting form to TikTok OAuth...");
+      form.submit();
     } catch (error) {
       console.error("Error:", error);
       const statusMessage = document.getElementById('statusMessage');
