@@ -15,21 +15,19 @@ title: Home
 <script>
   window.redirectToTikTok = function() {
     try {
-      console.log("Button clicked - Starting OAuth flow");
+      console.log("Starting OAuth flow");
       const button = document.getElementById('connectButton');
       const statusMessage = document.getElementById('statusMessage');
       button.disabled = true;
       statusMessage.textContent = "Connecting to TikTok...";
       statusMessage.style.display = "block";
 
-      // Hardcoded values with maximum simplicity
+      // Simple configuration
       const clientKey = "sbawtupv4in9186fva";
-      // Ensure no trailing slashes or extra characters
       const redirectUri = "https://tiktok-oauth-backend.onrender.com/auth/callback";
-      // Simple random string for state
       const state = "state" + Math.floor(Math.random() * 1000000);
       
-      // Super simple URL construction - avoid any complex encoding
+      // Direct URL construction
       const tiktokAuthUrl = "https://www.tiktok.com/auth/authorize" + 
                            "?client_key=" + clientKey + 
                            "&scope=user.info.profile,video.list" + 
@@ -37,25 +35,17 @@ title: Home
                            "&redirect_uri=" + encodeURIComponent(redirectUri) + 
                            "&state=" + state;
       
-      // Detailed logging
-      console.log("=== TikTok OAuth Debug Info ===");
-      console.log("Client Key:", clientKey);
-      console.log("Redirect URI (before encoding):", redirectUri);
-      console.log("Redirect URI (encoded):", encodeURIComponent(redirectUri));
-      console.log("State:", state);
-      console.log("Full Auth URL:", tiktokAuthUrl);
+      // Essential logging
+      console.log("Auth URL:", tiktokAuthUrl);
       
-      // Store state in sessionStorage for verification
+      // Store minimal state
       sessionStorage.setItem('oauth_state', state);
-      sessionStorage.setItem('oauth_debug_time', new Date().toString());
+      sessionStorage.setItem('oauth_url', tiktokAuthUrl);
       
-      // Add fallback for debugging
-      sessionStorage.setItem('last_tiktok_auth_url', tiktokAuthUrl);
-      
-      // Redirect the browser to TikTok's OAuth endpoint
+      // Redirect
       window.location.href = tiktokAuthUrl;
     } catch (error) {
-      console.error("Error in OAuth flow:", error);
+      console.error("Error:", error);
       const statusMessage = document.getElementById('statusMessage');
       statusMessage.textContent = "An error occurred. Please try again.";
       statusMessage.style.display = "block";
@@ -69,89 +59,56 @@ title: Home
     const code = urlParams.get('code');
     const state = urlParams.get('state');
     const error = urlParams.get('error');
-    const errorDescription = urlParams.get('error_description');
-    const errorType = urlParams.get('error_type');
-    const errCode = urlParams.get('errCode');
     const statusMessage = document.getElementById('statusMessage');
 
-    // Enhanced error logging
+    // Handle errors
     if (error) {
-      console.error('=== TikTok OAuth Error ===');
-      console.error('Error:', error);
-      console.error('Error Description:', errorDescription);
-      console.error('Error Type:', errorType);
-      console.error('Error Code:', errCode);
-      console.error('State:', state);
-      console.error('Last Auth URL:', sessionStorage.getItem('last_tiktok_auth_url'));
-      console.error('Auth Attempt Time:', sessionStorage.getItem('oauth_debug_time'));
+      console.error('OAuth Error:', error, 
+                   'Type:', urlParams.get('error_type'), 
+                   'Code:', urlParams.get('errCode'));
       
-      // Show detailed error to user
-      statusMessage.innerHTML = `<strong>Authentication Error:</strong><br>
-                               Type: ${errorType || error}<br>
-                               Code: ${errCode || 'N/A'}<br>
-                               Details: ${errorDescription || 'No details provided'}<br>
-                               <small>Please check console for more information</small>`;
+      statusMessage.textContent = `Authentication Error: ${urlParams.get('error_description') || error}`;
       statusMessage.style.display = "block";
       return;
     }
 
     if (code) {
-      console.log('=== TikTok OAuth Success ===');
-      console.log('Authorization code received');
-      console.log('State:', state);
-      
+      // Verify state
       const storedState = sessionStorage.getItem('oauth_state');
       if (state !== storedState) {
-        console.error('State mismatch - possible CSRF attack');
-        console.error('Received state:', state);
-        console.error('Stored state:', storedState);
+        console.error('State mismatch');
         statusMessage.textContent = 'Security Error: Invalid state parameter';
         statusMessage.style.display = "block";
         return;
       }
 
-      console.log('State verification successful');
-      // Clear the stored state
+      // Clean up
       sessionStorage.removeItem('oauth_state');
-      sessionStorage.removeItem('oauth_debug_time');
-      sessionStorage.removeItem('last_tiktok_auth_url');
+      sessionStorage.removeItem('oauth_url');
 
-      // Show processing message
+      // Process authentication
       statusMessage.textContent = 'Processing authentication...';
       statusMessage.style.display = "block";
 
-      // Send the code to your backend
-      console.log('Sending code to backend...');
+      // Send to backend
       fetch('https://tiktok-oauth-backend.onrender.com/auth/callback', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          code: code,
-          state: state
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, state })
       })
       .then(response => {
-        console.log('Backend response status:', response.status);
-        if (!response.ok) {
-          throw new Error('Backend server error: ' + response.status);
-        }
+        if (!response.ok) throw new Error('Server error: ' + response.status);
         return response.json();
       })
       .then(data => {
-        console.log('Backend response data:', data);
         statusMessage.textContent = 'Successfully connected to TikTok!';
         statusMessage.style.color = 'green';
         statusMessage.style.display = "block";
-        // Redirect to integration page or show success UI
-        setTimeout(() => {
-          window.location.href = '/integration.html';
-        }, 2000);
+        setTimeout(() => { window.location.href = '/integration.html'; }, 2000);
       })
       .catch(error => {
         console.error('Backend Error:', error);
-        statusMessage.textContent = 'Error processing authentication: ' + error.message;
+        statusMessage.textContent = 'Error: ' + error.message;
         statusMessage.style.display = "block";
         document.getElementById('connectButton').disabled = false;
       });
