@@ -22,56 +22,46 @@ title: Home
       statusMessage.textContent = "Connecting to TikTok...";
       statusMessage.style.display = "block";
 
-      // Create a form and submit it instead of using window.location
-      // This prevents issues with URL parameter encoding
-      const form = document.createElement('form');
-      form.method = 'GET';
-      form.action = 'https://www.tiktok.com/auth/authorize';
-      form.style.display = 'none';
-      
-      // Add client key
-      const clientKeyInput = document.createElement('input');
-      clientKeyInput.type = 'hidden';
-      clientKeyInput.name = 'client_key';
-      clientKeyInput.value = 'sbawtupv4in9186fva';
-      form.appendChild(clientKeyInput);
-      
-      // Add scope
-      const scopeInput = document.createElement('input');
-      scopeInput.type = 'hidden';
-      scopeInput.name = 'scope';
-      scopeInput.value = 'user.info.profile,video.list';
-      form.appendChild(scopeInput);
-      
-      // Add response type
-      const responseTypeInput = document.createElement('input');
-      responseTypeInput.type = 'hidden';
-      responseTypeInput.name = 'response_type';
-      responseTypeInput.value = 'code';
-      form.appendChild(responseTypeInput);
-      
-      // Add redirect URI
-      const redirectUriInput = document.createElement('input');
-      redirectUriInput.type = 'hidden';
-      redirectUriInput.name = 'redirect_uri';
-      redirectUriInput.value = 'https://tiktok-oauth-backend.onrender.com/auth/callback';
-      form.appendChild(redirectUriInput);
-      
-      // Add state
+      // Generate a simple state
       const state = "state" + Math.floor(Math.random() * 1000000);
-      const stateInput = document.createElement('input');
-      stateInput.type = 'hidden';
-      stateInput.name = 'state';
-      stateInput.value = state;
-      form.appendChild(stateInput);
-      
-      // Store state for verification
       sessionStorage.setItem('oauth_state', state);
       
-      // Add form to body and submit
-      document.body.appendChild(form);
-      console.log("Submitting form to TikTok OAuth...");
-      form.submit();
+      // Hardcode the exact redirect URI that's registered in TikTok Developer Portal
+      const redirectUri = "https://tiktok-oauth-backend.onrender.com/auth/callback";
+      
+      // Build the base URL without any parameters
+      const baseUrl = "https://www.tiktok.com/auth/authorize";
+      
+      // Open a popup window with just the base URL
+      const popup = window.open(baseUrl, "TikTokAuth", "width=800,height=600");
+      
+      // Wait for the popup to load, then navigate with parameters added via location.replace
+      // This approach prevents parameter encoding issues
+      setTimeout(function() {
+        if (popup && !popup.closed) {
+          const finalUrl = baseUrl + 
+            "?client_key=sbawtupv4in9186fva" + 
+            "&scope=user.info.profile,video.list" + 
+            "&response_type=code" + 
+            "&redirect_uri=" + encodeURIComponent(redirectUri) + 
+            "&state=" + state;
+            
+          console.log("Navigating popup to:", finalUrl);
+          popup.location.replace(finalUrl);
+          
+          // Set up message listener for the popup to communicate back
+          window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'tiktok_callback') {
+              popup.close();
+              handleCallback(event.data);
+            }
+          });
+        } else {
+          statusMessage.textContent = "Popup was blocked. Please allow popups and try again.";
+          statusMessage.style.display = "block";
+          button.disabled = false;
+        }
+      }, 500);
     } catch (error) {
       console.error("Error:", error);
       const statusMessage = document.getElementById('statusMessage');
@@ -80,49 +70,41 @@ title: Home
       document.getElementById('connectButton').disabled = false;
     }
   };
-
-  // Handle the OAuth callback
-  window.addEventListener('load', function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const state = urlParams.get('state');
-    const error = urlParams.get('error');
+  
+  // Function to handle the callback data
+  function handleCallback(data) {
     const statusMessage = document.getElementById('statusMessage');
-
-    // Handle errors
-    if (error) {
-      console.error('OAuth Error:', error, 
-                   'Type:', urlParams.get('error_type'), 
-                   'Code:', urlParams.get('errCode'));
-      
-      statusMessage.textContent = `Authentication Error: ${urlParams.get('error_description') || error}`;
+    
+    if (data.error) {
+      console.error('OAuth Error:', data.error);
+      statusMessage.textContent = `Authentication Error: ${data.errorDescription || data.error}`;
       statusMessage.style.display = "block";
+      document.getElementById('connectButton').disabled = false;
       return;
     }
-
-    if (code) {
+    
+    if (data.code) {
       // Verify state
-      const storedState = sessionStorage.getItem('oauth_state');
-      if (state !== storedState) {
+      if (data.state !== sessionStorage.getItem('oauth_state')) {
         console.error('State mismatch');
         statusMessage.textContent = 'Security Error: Invalid state parameter';
         statusMessage.style.display = "block";
+        document.getElementById('connectButton').disabled = false;
         return;
       }
-
+      
       // Clean up
       sessionStorage.removeItem('oauth_state');
-      sessionStorage.removeItem('oauth_url');
-
+      
       // Process authentication
       statusMessage.textContent = 'Processing authentication...';
       statusMessage.style.display = "block";
-
+      
       // Send to backend
       fetch('https://tiktok-oauth-backend.onrender.com/auth/callback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, state })
+        body: JSON.stringify({ code: data.code, state: data.state })
       })
       .then(response => {
         if (!response.ok) throw new Error('Server error: ' + response.status);
@@ -140,6 +122,37 @@ title: Home
         statusMessage.style.display = "block";
         document.getElementById('connectButton').disabled = false;
       });
+    }
+  }
+
+  // Handle the OAuth callback if coming back directly (not via popup)
+  window.addEventListener('load', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    const error = urlParams.get('error');
+    
+    if (code || error) {
+      const callbackData = {
+        code: code,
+        state: state,
+        error: error,
+        errorDescription: urlParams.get('error_description'),
+        errorType: urlParams.get('error_type'),
+        errCode: urlParams.get('errCode')
+      };
+      
+      // If we're in the popup, send message to parent
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({
+          type: 'tiktok_callback',
+          ...callbackData
+        }, '*');
+        window.close();
+      } else {
+        // Otherwise handle directly
+        handleCallback(callbackData);
+      }
     }
   });
 </script>
