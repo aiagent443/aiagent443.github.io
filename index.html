@@ -84,7 +84,7 @@ title: Home
       sessionStorage.removeItem('oauth_state');
 
       // Send the code to your backend
-      fetch('https://tiktok-oauth-backend.onrender.com', {
+      fetch('https://tiktok-oauth-backend.onrender.com/auth/callback', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
