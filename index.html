@@ -22,8 +22,8 @@ title: Home
       statusMessage.textContent = "Connecting to TikTok...";
       statusMessage.style.display = "block";
       
-      // Hardcode the exact redirect URI that's registered in TikTok Developer Portal
-      const redirectUri = "https://tiktok-oauth-backend.onrender.com/auth/callback";
+      // Use the root domain as redirect URI - this is likely what's registered
+      const redirectUri = "https://tiktok-oauth-backend.onrender.com";
       
       // Construct the authorization URL WITHOUT a state parameter
       const authUrl = "https://www.tiktok.com/auth/authorize" + 
@@ -69,8 +69,8 @@ title: Home
       statusMessage.textContent = 'Processing authentication...';
       statusMessage.style.display = "block";
       
-      // Send to backend
-      fetch('https://tiktok-oauth-backend.onrender.com/auth/callback', {
+      // Send to backend root endpoint
+      fetch('https://tiktok-oauth-backend.onrender.com', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: code })
