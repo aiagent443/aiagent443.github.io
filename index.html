@@ -28,17 +28,18 @@ title: Home
       const redirectUri = "https://tiktok-oauth-backend.onrender.com/auth/callback";
       const state = Math.random().toString(36).substring(7);
       
-      // Manually construct the URL with proper encoding
-      const tiktokAuthUrl = "https://www.tiktok.com/auth/authorize/" +
-        "?client_key=" + clientKey +
-        "&scope=user.info.profile%2Cvideo.list" +
-        "&response_type=code" +
-        "&redirect_uri=" + encodeURIComponent(redirectUri) +
-        "&state=" + state;
+      // Use URLSearchParams to properly construct the URL
+      const params = new URLSearchParams();
+      params.append('client_key', clientKey);
+      params.append('scope', 'user.info.profile,video.list');
+      params.append('response_type', 'code');
+      params.append('redirect_uri', redirectUri);
+      params.append('state', state);
+      
+      const tiktokAuthUrl = "https://www.tiktok.com/auth/authorize/?" + params.toString();
       
       console.log("Generated TikTok Auth URL:", tiktokAuthUrl);
-      console.log("Redirect URI (before encoding):", redirectUri);
-      console.log("Redirect URI (after encoding):", encodeURIComponent(redirectUri));
+      console.log("Redirect URI:", redirectUri);
       
       // Store state in sessionStorage for verification
       sessionStorage.setItem('oauth_state', state);
