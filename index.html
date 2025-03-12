@@ -23,15 +23,15 @@ title: Home
       statusMessage.style.display = "block";
 
       const clientKey = "sbawtupv4in9186fva";
-      const redirectUri = encodeURIComponent("https://tiktok-oauth-backend.onrender.com/auth/callback"); // ✅ Corrected
+      const redirectUri = "https://tiktok-oauth-backend.onrender.com/auth/callback"; // ✅ FIXED: No manual encoding
       const state = Math.random().toString(36).substring(7);
 
       const params = new URLSearchParams({
         client_key: clientKey,
         scope: "user.info.profile,video.list",
         response_type: "code",
-        redirect_uri: redirectUri, // ✅ No extra parameters
-        state: state // ✅ Sent separately
+        redirect_uri: redirectUri,  // ✅ FIXED: Let browser handle encoding
+        state: state
       });
 
       const tiktokAuthUrl = "https://www.tiktok.com/auth/authorize/?" + params.toString();
@@ -78,7 +78,7 @@ title: Home
 
       sessionStorage.removeItem('oauth_state');
 
-      fetch("https://tiktok-oauth-backend.onrender.com/auth/callback", { // ✅ Fixed
+      fetch("https://tiktok-oauth-backend.onrender.com/auth/callback", { // ✅ FIXED: Matched registered Redirect URI
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, state })
