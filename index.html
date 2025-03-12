@@ -21,47 +21,21 @@ title: Home
       button.disabled = true;
       statusMessage.textContent = "Connecting to TikTok...";
       statusMessage.style.display = "block";
-
-      // Generate a simple state
-      const state = "state" + Math.floor(Math.random() * 1000000);
-      sessionStorage.setItem('oauth_state', state);
       
       // Hardcode the exact redirect URI that's registered in TikTok Developer Portal
       const redirectUri = "https://tiktok-oauth-backend.onrender.com/auth/callback";
       
-      // Build the base URL without any parameters
-      const baseUrl = "https://www.tiktok.com/auth/authorize";
+      // Construct the authorization URL WITHOUT a state parameter
+      const authUrl = "https://www.tiktok.com/auth/authorize" + 
+                     "?client_key=sbawtupv4in9186fva" + 
+                     "&scope=user.info.profile,video.list" + 
+                     "&response_type=code" + 
+                     "&redirect_uri=" + encodeURIComponent(redirectUri);
       
-      // Open a popup window with just the base URL
-      const popup = window.open(baseUrl, "TikTokAuth", "width=800,height=600");
+      console.log("Auth URL:", authUrl);
       
-      // Wait for the popup to load, then navigate with parameters added via location.replace
-      // This approach prevents parameter encoding issues
-      setTimeout(function() {
-        if (popup && !popup.closed) {
-          const finalUrl = baseUrl + 
-            "?client_key=sbawtupv4in9186fva" + 
-            "&scope=user.info.profile,video.list" + 
-            "&response_type=code" + 
-            "&redirect_uri=" + encodeURIComponent(redirectUri) + 
-            "&state=" + state;
-            
-          console.log("Navigating popup to:", finalUrl);
-          popup.location.replace(finalUrl);
-          
-          // Set up message listener for the popup to communicate back
-          window.addEventListener('message', function(event) {
-            if (event.data && event.data.type === 'tiktok_callback') {
-              popup.close();
-              handleCallback(event.data);
-            }
-          });
-        } else {
-          statusMessage.textContent = "Popup was blocked. Please allow popups and try again.";
-          statusMessage.style.display = "block";
-          button.disabled = false;
-        }
-      }, 500);
+      // Direct redirect - no state parameter to cause issues
+      window.location.href = authUrl;
     } catch (error) {
       console.error("Error:", error);
       const statusMessage = document.getElementById('statusMessage');
@@ -70,32 +44,27 @@ title: Home
       document.getElementById('connectButton').disabled = false;
     }
   };
-  
-  // Function to handle the callback data
-  function handleCallback(data) {
+
+  // Handle the OAuth callback
+  window.addEventListener('load', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const error = urlParams.get('error');
     const statusMessage = document.getElementById('statusMessage');
-    
-    if (data.error) {
-      console.error('OAuth Error:', data.error);
-      statusMessage.textContent = `Authentication Error: ${data.errorDescription || data.error}`;
+
+    // Handle errors
+    if (error) {
+      console.error('OAuth Error:', error, 
+                   'Type:', urlParams.get('error_type'), 
+                   'Code:', urlParams.get('errCode'));
+      
+      statusMessage.textContent = `Authentication Error: ${urlParams.get('error_description') || error}`;
       statusMessage.style.display = "block";
       document.getElementById('connectButton').disabled = false;
       return;
     }
-    
-    if (data.code) {
-      // Verify state
-      if (data.state !== sessionStorage.getItem('oauth_state')) {
-        console.error('State mismatch');
-        statusMessage.textContent = 'Security Error: Invalid state parameter';
-        statusMessage.style.display = "block";
-        document.getElementById('connectButton').disabled = false;
-        return;
-      }
-      
-      // Clean up
-      sessionStorage.removeItem('oauth_state');
-      
+
+    if (code) {
       // Process authentication
       statusMessage.textContent = 'Processing authentication...';
       statusMessage.style.display = "block";
@@ -104,7 +73,7 @@ title: Home
       fetch('https://tiktok-oauth-backend.onrender.com/auth/callback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: data.code, state: data.state })
+        body: JSON.stringify({ code: code })
       })
       .then(response => {
         if (!response.ok) throw new Error('Server error: ' + response.status);
@@ -122,37 +91,6 @@ title: Home
         statusMessage.style.display = "block";
         document.getElementById('connectButton').disabled = false;
       });
-    }
-  }
-
-  // Handle the OAuth callback if coming back directly (not via popup)
-  window.addEventListener('load', function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const state = urlParams.get('state');
-    const error = urlParams.get('error');
-    
-    if (code || error) {
-      const callbackData = {
-        code: code,
-        state: state,
-        error: error,
-        errorDescription: urlParams.get('error_description'),
-        errorType: urlParams.get('error_type'),
-        errCode: urlParams.get('errCode')
-      };
-      
-      // If we're in the popup, send message to parent
-      if (window.opener && !window.opener.closed) {
-        window.opener.postMessage({
-          type: 'tiktok_callback',
-          ...callbackData
-        }, '*');
-        window.close();
-      } else {
-        // Otherwise handle directly
-        handleCallback(callbackData);
-      }
     }
   });
 </script>
