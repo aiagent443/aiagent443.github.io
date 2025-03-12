@@ -22,19 +22,15 @@ title: Home
       statusMessage.textContent = "Connecting to TikTok...";
       statusMessage.style.display = "block";
       
-      // Use the root domain as redirect URI - this is likely what's registered
-      const redirectUri = "https://tiktok-oauth-backend.onrender.com";
+      const clientKey = "aw9vfqvvxjxbvnxl";
+      const redirectUri = "https://tiktok-oauth-backend.onrender.com/auth/callback";
       
-      // Construct the authorization URL WITHOUT a state parameter
-      const authUrl = "https://www.tiktok.com/auth/authorize" + 
-                     "?client_key=sbawtupv4in9186fva" + 
-                     "&scope=user.info.profile,video.list" + 
-                     "&response_type=code" + 
-                     "&redirect_uri=" + encodeURIComponent(redirectUri);
+      // Construct the authorization URL
+      const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&response_type=code&scope=user.info.basic&redirect_uri=${encodeURIComponent(redirectUri)}`;
       
       console.log("Auth URL:", authUrl);
       
-      // Direct redirect - no state parameter to cause issues
+      // Redirect to TikTok authorization page
       window.location.href = authUrl;
     } catch (error) {
       console.error("Error:", error);
@@ -55,8 +51,7 @@ title: Home
     // Handle errors
     if (error) {
       console.error('OAuth Error:', error, 
-                   'Type:', urlParams.get('error_type'), 
-                   'Code:', urlParams.get('errCode'));
+                   'Description:', urlParams.get('error_description'));
       
       statusMessage.textContent = `Authentication Error: ${urlParams.get('error_description') || error}`;
       statusMessage.style.display = "block";
@@ -66,31 +61,12 @@ title: Home
 
     if (code) {
       // Process authentication
-      statusMessage.textContent = 'Processing authentication...';
+      statusMessage.textContent = 'Authentication successful! The backend will process your code.';
       statusMessage.style.display = "block";
+      statusMessage.style.color = 'green';
       
-      // Send to backend root endpoint
-      fetch('https://tiktok-oauth-backend.onrender.com', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code })
-      })
-      .then(response => {
-        if (!response.ok) throw new Error('Server error: ' + response.status);
-        return response.json();
-      })
-      .then(data => {
-        statusMessage.textContent = 'Successfully connected to TikTok!';
-        statusMessage.style.color = 'green';
-        statusMessage.style.display = "block";
-        setTimeout(() => { window.location.href = '/integration.html'; }, 2000);
-      })
-      .catch(error => {
-        console.error('Backend Error:', error);
-        statusMessage.textContent = 'Error: ' + error.message;
-        statusMessage.style.display = "block";
-        document.getElementById('connectButton').disabled = false;
-      });
+      // No need to make an additional request as the backend will receive the code directly
+      // through the redirect_uri
     }
   });
 </script>
