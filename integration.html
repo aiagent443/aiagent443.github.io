@@ -204,7 +204,7 @@ title: TikTok Integration
         video_url: absoluteVideoUrl,
         title: "Historical Event: The Moon Landing",
         description: "Experience the historic Moon Landing like never before. #history #education #moonlanding",
-        privacy_level: "SELF_ONLY" // Start with private posts for testing
+        privacy_level: "SELF_ONLY" // Must be SELF_ONLY for unaudited applications
       })
     })
     .then(response => {
@@ -214,7 +214,7 @@ title: TikTok Integration
     .then(data => {
       console.log('Backend response data:', data);
       if (data.success) {
-        alert("Successfully posted to TikTok! The video is now in your TikTok account.");
+        alert("Successfully posted to TikTok! The video is now in your TikTok account as a private video (visible only to you). This is a limitation of TikTok's API for new applications.");
       } else {
         alert(`Failed to post to TikTok: ${data.error}`);
         
@@ -323,3 +323,4 @@ title: TikTok Integration
 <footer>
   <p><a href="/privacy.html">Privacy Policy</a> | <a href="/terms.html">Terms of Service</a></p>
 </footer>
+
