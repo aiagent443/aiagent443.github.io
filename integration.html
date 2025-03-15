@@ -34,7 +34,44 @@ title: TikTok Integration
   </div>
 </div>
 
+<!-- TikTok authentication status -->
+<div id="tiktokAuthStatus" style="margin-top: 20px; text-align: center; display: none;">
+  <p>You need to <a href="/">connect to TikTok</a> before you can post videos.</p>
+</div>
+
 <script>
+  // Check TikTok authentication status on page load
+  window.addEventListener('load', function() {
+    const openId = localStorage.getItem('tiktok_open_id');
+    
+    if (openId) {
+      // User is authenticated, check token validity
+      fetch(`https://tiktok-oauth-backend.onrender.com/api/token-status/${openId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success && data.authenticated) {
+            console.log('TikTok authentication is valid');
+            // Hide the auth status message if it was shown
+            document.getElementById('tiktokAuthStatus').style.display = 'none';
+          } else {
+            // Token is invalid or expired
+            console.log('TikTok token is invalid or expired');
+            localStorage.removeItem('tiktok_open_id');
+            document.getElementById('tiktokAuthStatus').style.display = 'block';
+          }
+        })
+        .catch(error => {
+          console.error('Error checking token status:', error);
+          // Show auth status message on error
+          document.getElementById('tiktokAuthStatus').style.display = 'block';
+        });
+    } else {
+      // User is not authenticated
+      console.log('User is not authenticated with TikTok');
+      document.getElementById('tiktokAuthStatus').style.display = 'block';
+    }
+  });
+
   function generateVideo() {
     const historicalEvent = document.getElementById('historicalEvent').value;
     if (!historicalEvent.trim()) {
@@ -88,7 +125,65 @@ title: TikTok Integration
   }
   
   function postToTikTok() {
-    alert("TikTok posting capability coming soon! This feature will allow you to share this historical content directly to TikTok.");
+    // Check if user is authenticated with TikTok
+    const openId = localStorage.getItem('tiktok_open_id');
+    
+    if (!openId) {
+      // User is not authenticated, redirect to home page to connect
+      alert("Please connect to TikTok first on the home page.");
+      window.location.href = "/";
+      return;
+    }
+    
+    // Get the video URL
+    const videoElement = document.getElementById('resultVideo');
+    const videoUrl = videoElement.querySelector('source').src;
+    
+    if (!videoUrl) {
+      alert("No video available to post.");
+      return;
+    }
+    
+    // Get the absolute URL for the video
+    const absoluteVideoUrl = new URL(videoUrl, window.location.origin).href;
+    
+    // Show loading state
+    const postButton = document.getElementById('postToTikTokButton');
+    const originalButtonText = postButton.textContent;
+    postButton.textContent = "Posting...";
+    postButton.disabled = true;
+    
+    // Send request to backend
+    fetch('https://tiktok-oauth-backend.onrender.com/api/post-to-tiktok', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        open_id: openId,
+        video_url: absoluteVideoUrl,
+        title: "Historical Event: The Moon Landing",
+        description: "Experience the historic Moon Landing like never before. #history #education #moonlanding",
+        privacy_level: "SELF_ONLY" // Start with private posts for testing
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert("Successfully posted to TikTok! The video is now in your TikTok account.");
+      } else {
+        alert(`Failed to post to TikTok: ${data.error}`);
+      }
+    })
+    .catch(error => {
+      console.error('Error posting to TikTok:', error);
+      alert(`Error posting to TikTok: ${error.message}`);
+    })
+    .finally(() => {
+      // Reset button state
+      postButton.textContent = originalButtonText;
+      postButton.disabled = false;
+    });
   }
 </script>
 

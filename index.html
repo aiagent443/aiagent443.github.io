@@ -27,7 +27,7 @@ title: Home
       const redirectUri = "https://tiktok-oauth-backend.onrender.com/auth/callback";
       
       // Construct the authorization URL
-      const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&response_type=code&scope=user.info.basic&redirect_uri=${encodeURIComponent(redirectUri)}`;
+      const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&response_type=code&scope=user.info.basic,video.publish&redirect_uri=${encodeURIComponent(redirectUri)}`;
       
       console.log("Auth URL:", authUrl);
       
@@ -47,7 +47,34 @@ title: Home
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const error = urlParams.get('error');
+    const authStatus = urlParams.get('auth');
+    const openId = urlParams.get('open_id');
     const statusMessage = document.getElementById('statusMessage');
+
+    // Handle successful authentication from backend redirect
+    if (authStatus === 'success' && openId) {
+      statusMessage.textContent = 'Authentication successful! You can now post videos to TikTok.';
+      statusMessage.style.display = "block";
+      statusMessage.style.color = 'green';
+      
+      // Store the open_id in localStorage for later use
+      localStorage.setItem('tiktok_open_id', openId);
+      
+      // Update button text
+      document.getElementById('connectButton').textContent = 'Connected to TikTok';
+      document.getElementById('connectButton').disabled = true;
+      
+      return;
+    }
+    
+    // Handle authentication errors from backend redirect
+    if (authStatus === 'error') {
+      const errorMessage = urlParams.get('message') || 'Unknown error';
+      statusMessage.textContent = `Authentication Error: ${decodeURIComponent(errorMessage)}`;
+      statusMessage.style.display = "block";
+      document.getElementById('connectButton').disabled = false;
+      return;
+    }
 
     // Handle errors
     if (error) {
