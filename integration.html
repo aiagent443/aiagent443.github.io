@@ -48,13 +48,18 @@ title: TikTok Integration
     const openId = urlParams.get('open_id');
     const errorMessage = urlParams.get('message');
     
+    console.log('URL parameters:', { authStatus, openId: openId ? 'PRESENT' : 'MISSING', errorMessage });
+    
     // Handle successful authentication from URL parameters
     if (authStatus === 'success' && openId) {
-      console.log('Authentication successful from URL parameters');
+      console.log('Authentication successful from URL parameters, open_id:', openId);
       // Store the open_id in localStorage for later use
       localStorage.setItem('tiktok_open_id', openId);
       // Hide the auth status message
       document.getElementById('tiktokAuthStatus').style.display = 'none';
+      
+      // Show success message
+      alert('Successfully connected to TikTok!');
     }
     
     // Handle authentication errors from URL parameters
@@ -62,16 +67,25 @@ title: TikTok Integration
       console.error('Authentication error from URL parameters:', decodeURIComponent(errorMessage));
       // Show the auth status message
       document.getElementById('tiktokAuthStatus').style.display = 'block';
+      
+      // Show error message
+      alert('Error connecting to TikTok: ' + decodeURIComponent(errorMessage));
     }
     
     // Check localStorage for existing authentication
     const storedOpenId = localStorage.getItem('tiktok_open_id');
+    console.log('Stored open_id in localStorage:', storedOpenId ? 'PRESENT' : 'MISSING');
     
     if (storedOpenId) {
       // User is authenticated, check token validity
+      console.log('Checking token validity for open_id:', storedOpenId);
       fetch(`https://tiktok-oauth-backend.onrender.com/api/token-status/${storedOpenId}`)
-        .then(response => response.json())
+        .then(response => {
+          console.log('Token status response:', response.status);
+          return response.json();
+        })
         .then(data => {
+          console.log('Token status data:', data);
           if (data.success && data.authenticated) {
             console.log('TikTok authentication is valid');
             // Hide the auth status message if it was shown
@@ -150,6 +164,7 @@ title: TikTok Integration
   function postToTikTok() {
     // Check if user is authenticated with TikTok
     const openId = localStorage.getItem('tiktok_open_id');
+    console.log('Posting to TikTok with open_id:', openId ? 'PRESENT' : 'MISSING');
     
     if (!openId) {
       // User is not authenticated, redirect to home page to connect
@@ -169,6 +184,7 @@ title: TikTok Integration
     
     // Get the absolute URL for the video
     const absoluteVideoUrl = new URL(videoUrl, window.location.origin).href;
+    console.log('Video URL:', absoluteVideoUrl);
     
     // Show loading state
     const postButton = document.getElementById('postToTikTokButton');
@@ -177,6 +193,7 @@ title: TikTok Integration
     postButton.disabled = true;
     
     // Send request to backend
+    console.log('Sending post request to backend with open_id:', openId);
     fetch('https://tiktok-oauth-backend.onrender.com/api/post-to-tiktok', {
       method: 'POST',
       headers: {
@@ -190,12 +207,22 @@ title: TikTok Integration
         privacy_level: "SELF_ONLY" // Start with private posts for testing
       })
     })
-    .then(response => response.json())
+    .then(response => {
+      console.log('Backend response status:', response.status);
+      return response.json();
+    })
     .then(data => {
+      console.log('Backend response data:', data);
       if (data.success) {
         alert("Successfully posted to TikTok! The video is now in your TikTok account.");
       } else {
         alert(`Failed to post to TikTok: ${data.error}`);
+        
+        // If token is invalid, clear it and show auth message
+        if (data.error.includes("No valid access token") || data.error.includes("Access token has expired")) {
+          localStorage.removeItem('tiktok_open_id');
+          document.getElementById('tiktokAuthStatus').style.display = 'block';
+        }
       }
     })
     .catch(error => {
