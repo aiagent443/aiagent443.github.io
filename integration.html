@@ -42,11 +42,34 @@ title: TikTok Integration
 <script>
   // Check TikTok authentication status on page load
   window.addEventListener('load', function() {
-    const openId = localStorage.getItem('tiktok_open_id');
+    // Check for URL parameters from OAuth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const authStatus = urlParams.get('auth');
+    const openId = urlParams.get('open_id');
+    const errorMessage = urlParams.get('message');
     
-    if (openId) {
+    // Handle successful authentication from URL parameters
+    if (authStatus === 'success' && openId) {
+      console.log('Authentication successful from URL parameters');
+      // Store the open_id in localStorage for later use
+      localStorage.setItem('tiktok_open_id', openId);
+      // Hide the auth status message
+      document.getElementById('tiktokAuthStatus').style.display = 'none';
+    }
+    
+    // Handle authentication errors from URL parameters
+    if (authStatus === 'error' && errorMessage) {
+      console.error('Authentication error from URL parameters:', decodeURIComponent(errorMessage));
+      // Show the auth status message
+      document.getElementById('tiktokAuthStatus').style.display = 'block';
+    }
+    
+    // Check localStorage for existing authentication
+    const storedOpenId = localStorage.getItem('tiktok_open_id');
+    
+    if (storedOpenId) {
       // User is authenticated, check token validity
-      fetch(`https://tiktok-oauth-backend.onrender.com/api/token-status/${openId}`)
+      fetch(`https://tiktok-oauth-backend.onrender.com/api/token-status/${storedOpenId}`)
         .then(response => response.json())
         .then(data => {
           if (data.success && data.authenticated) {
@@ -65,8 +88,8 @@ title: TikTok Integration
           // Show auth status message on error
           document.getElementById('tiktokAuthStatus').style.display = 'block';
         });
-    } else {
-      // User is not authenticated
+    } else if (!authStatus || authStatus !== 'success') {
+      // User is not authenticated and not coming from a successful OAuth flow
       console.log('User is not authenticated with TikTok');
       document.getElementById('tiktokAuthStatus').style.display = 'block';
     }
