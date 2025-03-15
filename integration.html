@@ -23,6 +23,14 @@ title: TikTok Integration
   <span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
 </div>
 
+<!-- Video container (initially hidden) -->
+<div id="videoContainer" style="display: none; margin-top: 20px; text-align: center;">
+  <video id="resultVideo" width="100%" max-width="600px" controls>
+    <source id="videoSource" src="" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</div>
+
 <script>
   function generateVideo() {
     const historicalEvent = document.getElementById('historicalEvent').value;
@@ -36,15 +44,43 @@ title: TikTok Integration
     document.getElementById('historicalEvent').disabled = true;
     document.getElementById('loadingIndicator').style.display = 'block';
     
+    // Hide video container if it was previously shown
+    document.getElementById('videoContainer').style.display = 'none';
+    
     // Wait for 5 seconds
     setTimeout(function() {
-      // Hide loading indicator, show input and button
+      // Hide loading indicator
       document.getElementById('loadingIndicator').style.display = 'none';
-      document.getElementById('generateButton').style.display = 'inline-block';
-      document.getElementById('historicalEvent').disabled = false;
       
-      // Show the alert
-      alert(`This feature is coming soon! We're working hard to bring you the best historical content generation tool for "${historicalEvent}".`);
+      // Check if the input is about the Moon Landing
+      if (historicalEvent.toLowerCase().includes("moon landing") || 
+          historicalEvent.toLowerCase().includes("apollo 11") ||
+          historicalEvent.toLowerCase().includes("neil armstrong")) {
+        
+        // Show the Moon Landing video
+        const videoContainer = document.getElementById('videoContainer');
+        const videoSource = document.getElementById('videoSource');
+        
+        // Set the video source to the Moon Landing video
+        videoSource.src = "/Moonlanding_USETHIS.mov";
+        
+        // Reload the video with the new source
+        document.getElementById('resultVideo').load();
+        
+        // Show the video container
+        videoContainer.style.display = 'block';
+        
+        // Enable the input field and show the button
+        document.getElementById('historicalEvent').disabled = false;
+        document.getElementById('generateButton').style.display = 'inline-block';
+        
+      } else {
+        // For other historical events, show the alert
+        document.getElementById('generateButton').style.display = 'inline-block';
+        document.getElementById('historicalEvent').disabled = false;
+        
+        alert(`This feature is coming soon! We're working hard to bring you the best historical content generation tool for "${historicalEvent}".`);
+      }
     }, 5000);
   }
 </script>
