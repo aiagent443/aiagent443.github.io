@@ -68,16 +68,25 @@ app.post('/api/post-to-tiktok', async (req, res) => {
     // Call TikTok API to post the video
     const postResponse = await axios({
       method: 'post',
-      url: 'https://open.tiktokapis.com/v2/video/publish/',
+      url: 'https://open.tiktokapis.com/v2/post/publish/video/init/',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
       },
       data: {
-        video_url: video_url,
-        title: title || "Video from Agent Content",
-        description: description || "Posted via Agent Content",
-        privacy_level: finalPrivacyLevel
+        post_info: {
+          title: title || "Video from Agent Content",
+          description: description || "Posted via Agent Content",
+          privacy_level: finalPrivacyLevel,
+          disable_duet: false,
+          disable_comment: false,
+          disable_stitch: false
+        },
+        source_info: {
+          source: "PULL_FROM_URL",
+          video_url: video_url
+        },
+        post_mode: "DIRECT_POST"
       }
     });
     
