@@ -24,6 +24,77 @@ app.get('/', (req, res) => {
   res.send('TikTok OAuth Backend Server is running!');
 });
 
+// New endpoint for posting to TikTok
+app.post('/api/post-to-tiktok', async (req, res) => {
+  const { open_id, video_url, title, description, privacy_level } = req.body;
+  
+  if (!open_id || !video_url) {
+    return res.status(400).json({
+      success: false,
+      error: 'Missing required parameters'
+    });
+  }
+  
+  try {
+    // Get access token for the user
+    // In a production app, you would store this in a database
+    // For now, we'll need to fetch a new one each time
+    const tokenResponse = await axios({
+      method: 'post',
+      url: 'https://open.tiktokapis.com/v2/oauth/token/',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      data: new URLSearchParams({
+        client_key: TIKTOK_CLIENT_KEY,
+        client_secret: TIKTOK_CLIENT_SECRET,
+        grant_type: 'refresh_token',
+        refresh_token: open_id // This is a simplification, normally you'd store the refresh token
+      }).toString()
+    });
+    
+    const accessToken = tokenResponse.data.access_token;
+    
+    if (!accessToken) {
+      return res.status(401).json({
+        success: false,
+        error: 'No valid access token'
+      });
+    }
+    
+    // Ensure privacy level is SELF_ONLY for unaudited apps
+    const finalPrivacyLevel = "SELF_ONLY"; // Force SELF_ONLY regardless of what was passed
+    
+    // Call TikTok API to post the video
+    const postResponse = await axios({
+      method: 'post',
+      url: 'https://open.tiktokapis.com/v2/video/publish/',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        video_url: video_url,
+        title: title || "Video from Agent Content",
+        description: description || "Posted via Agent Content",
+        privacy_level: finalPrivacyLevel
+      }
+    });
+    
+    return res.json({
+      success: true,
+      data: postResponse.data
+    });
+    
+  } catch (error) {
+    console.error('Error posting to TikTok:', error.response ? error.response.data : error.message);
+    return res.status(500).json({
+      success: false,
+      error: error.response ? error.response.data : error.message
+    });
+  }
+});
+
 // OAuth callback endpoint
 app.get('/auth/callback', async (req, res) => {
   const { code } = req.query;
